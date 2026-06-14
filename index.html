@@ -43,10 +43,27 @@ html,body{width:100%;height:100%;overflow:hidden;background:#060818;font-family:
 @keyframes twinkle{0%,100%{opacity:1}50%{opacity:.5}}
 .star-label{font-family:'Dancing Script',cursive;font-size:clamp(10px,1.4vw,13px);
   color:rgba(255,255,220,.9);text-shadow:0 0 5px #000,0 0 10px #000;white-space:nowrap}
-.slides-container{width:min(720px,100vw);height:100%;padding:70px 0 20px;
-  display:flex;align-items:center;justify-content:center}
-.slide-img{display:none;width:100%;max-width:100%;max-height:calc(100vh - 90px);object-fit:contain}
-.slide-img.active{display:block}
+.slides-container{position:relative;width:min(720px,100vw);height:100%;overflow:hidden}
+.slides-container::after{content:'';position:absolute;inset:-8%;pointer-events:none;opacity:0;z-index:2;
+  background:
+    linear-gradient(135deg,transparent 18%,rgba(255,255,255,.06) 32%,rgba(255,248,220,.42) 37%,rgba(180,220,255,.2) 41%,transparent 52%),
+    radial-gradient(circle at 22% 28%,rgba(255,255,255,.95) 0 1.6px,transparent 4px),
+    radial-gradient(circle at 76% 24%,rgba(255,245,210,.82) 0 2px,transparent 5px),
+    radial-gradient(circle at 64% 70%,rgba(190,220,255,.72) 0 1.5px,transparent 4px),
+    radial-gradient(circle at 36% 66%,rgba(255,255,255,.88) 0 1.7px,transparent 4.5px),
+    radial-gradient(circle at center,rgba(255,255,255,.16),transparent 62%)}
+.slides-container.transitioning::after{animation:star-sweep 1.45s cubic-bezier(.22,.7,.2,1)}
+.slide-img{position:absolute;top:70px;left:50%;width:min(720px,calc(100vw - 24px));
+  max-width:100%;max-height:calc(100vh - 90px);object-fit:contain;
+  opacity:0;visibility:hidden;transform:translateX(-50%) scale(.965);
+  transition:opacity .9s ease,transform 1.15s ease;filter:drop-shadow(0 18px 40px rgba(0,0,0,.25))}
+.slide-img.active{opacity:1;visibility:visible;transform:translateX(-50%) scale(1);z-index:1}
+@keyframes star-sweep{
+  0%{opacity:0;transform:translate3d(-5%,-3%,0) scale(.94) rotate(-2deg)}
+  18%{opacity:.24}
+  45%{opacity:.72}
+  100%{opacity:0;transform:translate3d(4%,3%,0) scale(1.08) rotate(1deg)}
+}
 .bg-italiano::before{background:linear-gradient(170deg,rgba(24,8,8,.74),rgba(38,15,15,.74))}
 .bg-inglese::before{background:linear-gradient(170deg,rgba(8,12,24,.72),rgba(16,24,40,.72))}
 .bg-arte::before{background:linear-gradient(170deg,rgba(20,8,24,.72),rgba(30,12,40,.72))}
@@ -227,6 +244,9 @@ const SUBJECTS=[
 ];
 const ORDER=['home',...Array.from(document.querySelectorAll('.section[id]:not(#home)')).map(section=>section.id)];
 let current='home';
+const sectionContainers=Object.fromEntries(
+  SUBJECTS.map(s=>[s.id,document.querySelector(`#${s.id} .slides-container`)])
+);
 const sectionSlides=Object.fromEntries(
   SUBJECTS.map(s=>[s.id,Array.from(document.querySelectorAll(`#${s.id} .slide-img`))])
 );
@@ -234,10 +254,16 @@ const sectionState=Object.fromEntries(
   SUBJECTS.map(s=>[s.id,0])
 );
 
-function setSlide(id,index){
+function setSlide(id,index,animate=false){
   const slides=sectionSlides[id]||[];
   if(!slides.length) return;
   const bounded=Math.max(0,Math.min(index,slides.length-1));
+  const container=sectionContainers[id];
+  if(animate&&container){
+    container.classList.remove('transitioning');
+    void container.offsetWidth;
+    container.classList.add('transitioning');
+  }
   sectionState[id]=bounded;
   slides.forEach((slide,i)=>slide.classList.toggle('active',i===bounded));
 }
@@ -246,7 +272,8 @@ function showSection(id,slideIndex=null){
   const el=document.getElementById(id);
   if(el){el.classList.add('active');}
   if(id!=='home'){
-    setSlide(id,slideIndex===null?sectionState[id]:slideIndex);
+    const targetSlide=slideIndex===null?sectionState[id]:slideIndex;
+    setSlide(id,targetSlide,current!=='home');
   }
   current=id; updateNav();
 }
@@ -272,7 +299,7 @@ function navigate(dir){
   const slides=sectionSlides[current]||[];
   const slideIdx=sectionState[current]||0;
   if(dir==='back'){
-    if(slideIdx>0){ setSlide(current,slideIdx-1); updateNav(); return; }
+    if(slideIdx>0){ setSlide(current,slideIdx-1,true); updateNav(); return; }
     if(idx>0){
       const prevId=ORDER[idx-1];
       if(prevId==='home') showSection('home');
@@ -280,7 +307,7 @@ function navigate(dir){
     }
   }
   if(dir==='next'){
-    if(slideIdx<slides.length-1){ setSlide(current,slideIdx+1); updateNav(); return; }
+    if(slideIdx<slides.length-1){ setSlide(current,slideIdx+1,true); updateNav(); return; }
     if(idx<ORDER.length-1) showSection(ORDER[idx+1],0);
   }
 }

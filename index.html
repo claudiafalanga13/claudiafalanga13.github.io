@@ -10,7 +10,7 @@
 html,body{width:100%;height:100%;overflow:hidden;background:#060818;font-family:'Crimson Text',Georgia,serif}
 .section{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;
   opacity:0;pointer-events:none;transition:opacity .35s ease;
-  overflow-y:auto;overflow-x:hidden;background:transparent;z-index:20}
+  overflow:hidden;background:transparent;z-index:20}
 .section.active{opacity:1;pointer-events:all}
 .section::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:0}
 .section>*{position:relative;z-index:1}
@@ -43,9 +43,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#060818;font-family:
 @keyframes twinkle{0%,100%{opacity:1}50%{opacity:.5}}
 .star-label{font-family:'Dancing Script',cursive;font-size:clamp(10px,1.4vw,13px);
   color:rgba(255,255,220,.9);text-shadow:0 0 5px #000,0 0 10px #000;white-space:nowrap}
-.slides-container{padding-top:54px;width:100%;max-width:720px;
-  display:flex;flex-direction:column;align-items:center;gap:0}
-.slide-img{width:100%;display:block;object-fit:contain}
+.slides-container{width:min(720px,100vw);height:100%;padding:70px 0 20px;
+  display:flex;align-items:center;justify-content:center}
+.slide-img{display:none;width:100%;max-width:100%;max-height:calc(100vh - 90px);object-fit:contain}
+.slide-img.active{display:block}
 .bg-italiano::before{background:linear-gradient(170deg,rgba(24,8,8,.74),rgba(38,15,15,.74))}
 .bg-inglese::before{background:linear-gradient(170deg,rgba(8,12,24,.72),rgba(16,24,40,.72))}
 .bg-arte::before{background:linear-gradient(170deg,rgba(20,8,24,.72),rgba(30,12,40,.72))}
@@ -198,6 +199,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#060818;font-family:
     <img src="slides/slide_22.jpg" alt="" class="slide-img">
     <img src="slides/slide_23.jpg" alt="" class="slide-img">
     <img src="slides/slide_24.jpg" alt="" class="slide-img">
+    <img src="slides/slide_24_1.jpg" alt="" class="slide-img">
   </div>
 </section>
 
@@ -223,26 +225,64 @@ const SUBJECTS=[
   {id:'religione',  label:'Religione',        color:'#c4b5fd', x:15, y:78},
   {id:'saluti',     label:'Saluti finali',    color:'#f9a8d4', x:52, y:84},
 ];
-const ORDER=['home',...SUBJECTS.map(s=>s.id)];
+const ORDER=['home',...Array.from(document.querySelectorAll('.section[id]:not(#home)')).map(section=>section.id)];
 let current='home';
+const sectionSlides=Object.fromEntries(
+  SUBJECTS.map(s=>[s.id,Array.from(document.querySelectorAll(`#${s.id} .slide-img`))])
+);
+const sectionState=Object.fromEntries(
+  SUBJECTS.map(s=>[s.id,0])
+);
 
-function showSection(id){
+function setSlide(id,index){
+  const slides=sectionSlides[id]||[];
+  if(!slides.length) return;
+  const bounded=Math.max(0,Math.min(index,slides.length-1));
+  sectionState[id]=bounded;
+  slides.forEach((slide,i)=>slide.classList.toggle('active',i===bounded));
+}
+function showSection(id,slideIndex=null){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   const el=document.getElementById(id);
-  if(el){el.classList.add('active');el.scrollTop=0;}
+  if(el){el.classList.add('active');}
+  if(id!=='home'){
+    setSlide(id,slideIndex===null?sectionState[id]:slideIndex);
+  }
   current=id; updateNav();
 }
 function updateNav(){
   const idx=ORDER.indexOf(current);
-  document.getElementById('btn-back').className='nav-btn'+(idx<=0?' disabled':'');
-  document.getElementById('btn-next').className='nav-btn'+(idx>=ORDER.length-1?' disabled':'');
+  const slideIdx=sectionState[current]||0;
+  const slideCount=(sectionSlides[current]||[]).length;
+  const atStart=current==='home'||(slideIdx===0&&idx<=1);
+  const atEnd=current!=='home'&&slideIdx===slideCount-1&&idx>=ORDER.length-1;
+  document.getElementById('btn-back').className='nav-btn'+(atStart?' disabled':'');
+  document.getElementById('btn-next').className='nav-btn'+(atEnd?' disabled':'');
   const subj=SUBJECTS.find(s=>s.id===current);
-  document.getElementById('nav-title').textContent=subj?'✦ '+subj.label:'✦ Sotto un manto di stelle';
+  document.getElementById('nav-title').textContent=subj
+    ?`✦ ${subj.label}${slideCount>1?` ${slideIdx+1}/${slideCount}`:''}`
+    :'✦ Sotto un manto di stelle';
 }
 function navigate(dir){
   const idx=ORDER.indexOf(current);
-  if(dir==='back'&&idx>0) showSection(ORDER[idx-1]);
-  if(dir==='next'&&idx<ORDER.length-1) showSection(ORDER[idx+1]);
+  if(current==='home'){
+    if(dir==='next'&&idx<ORDER.length-1) showSection(ORDER[idx+1],0);
+    return;
+  }
+  const slides=sectionSlides[current]||[];
+  const slideIdx=sectionState[current]||0;
+  if(dir==='back'){
+    if(slideIdx>0){ setSlide(current,slideIdx-1); updateNav(); return; }
+    if(idx>0){
+      const prevId=ORDER[idx-1];
+      if(prevId==='home') showSection('home');
+      else showSection(prevId,(sectionSlides[prevId]||[]).length-1);
+    }
+  }
+  if(dir==='next'){
+    if(slideIdx<slides.length-1){ setSlide(current,slideIdx+1); updateNav(); return; }
+    if(idx<ORDER.length-1) showSection(ORDER[idx+1],0);
+  }
 }
 document.addEventListener('keydown',e=>{
   if(e.key==='ArrowRight'||e.key==='ArrowDown') navigate('next');
@@ -255,7 +295,7 @@ SUBJECTS.forEach((s,i)=>{
   const btn=document.createElement('div');
   btn.className='star-btn';
   btn.style.left=s.x+'%'; btn.style.top=s.y+'%';
-  btn.onclick=()=>showSection(s.id);
+  btn.onclick=()=>showSection(s.id,0);
   btn.innerHTML=`<div class="star-icon" style="color:${s.color};animation-delay:${delays[i]||0}s">★</div><div class="star-label">${s.label}</div>`;
   grid.appendChild(btn);
 });
@@ -275,6 +315,7 @@ function draw(){
   requestAnimationFrame(draw);
 }
 window.addEventListener('resize',resize); resize(); draw();
+Object.keys(sectionSlides).forEach(id=>setSlide(id,0));
 updateNav();
 </script>
 </body>

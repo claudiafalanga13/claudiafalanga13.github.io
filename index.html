@@ -10,8 +10,10 @@
 html,body{width:100%;height:100%;overflow:hidden;background:#060818;font-family:'Crimson Text',Georgia,serif}
 .section{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;
   opacity:0;pointer-events:none;transition:opacity .35s ease;
-  overflow-y:auto;overflow-x:hidden;background:#060818}
+  overflow-y:auto;overflow-x:hidden;background:transparent;z-index:20}
 .section.active{opacity:1;pointer-events:all}
+.section::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:0}
+.section>*{position:relative;z-index:1}
 .nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;
   justify-content:space-between;padding:10px 18px;
   background:rgba(5,5,20,0.78);backdrop-filter:blur(10px);
@@ -27,7 +29,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#060818;font-family:
   white-space:nowrap;max-width:180px;overflow:hidden;text-overflow:ellipsis}
 .nav-home:hover{color:#fff}
 #home{justify-content:center;align-items:center}
-#sky-canvas{position:absolute;inset:0;pointer-events:none}
+#sky-canvas{position:fixed;inset:0;pointer-events:none;z-index:0}
 .home-title{position:relative;z-index:10;text-align:center;margin-bottom:44px;pointer-events:none}
 .home-title h1{font-family:'Dancing Script',cursive;font-size:clamp(26px,6vw,50px);
   color:rgba(255,255,240,.9);text-shadow:0 0 28px rgba(130,100,255,.6);line-height:1.25}
@@ -44,23 +46,25 @@ html,body{width:100%;height:100%;overflow:hidden;background:#060818;font-family:
 .slides-container{padding-top:54px;width:100%;max-width:720px;
   display:flex;flex-direction:column;align-items:center;gap:0}
 .slide-img{width:100%;display:block;object-fit:contain}
-.bg-italiano{background:linear-gradient(170deg,#180808,#260f0f)}
-.bg-inglese{background:linear-gradient(170deg,#080c18,#101828)}
-.bg-arte{background:linear-gradient(170deg,#140818,#1e0c28)}
-.bg-scienze{background:linear-gradient(170deg,#040810,#060e1e)}
-.bg-storia{background:linear-gradient(170deg,#07131f,#0f1e35)}
-.bg-tecnologia{background:linear-gradient(170deg,#060c14,#0c1420)}
-.bg-geografia{background:linear-gradient(170deg,#081208,#0c2010)}
-.bg-educivica{background:linear-gradient(170deg,#0e1408,#162008)}
-.bg-scienzemot{background:linear-gradient(170deg,#180c06,#221408)}
-.bg-francese{background:linear-gradient(170deg,#081208,#102018)}
-.bg-musica{background:linear-gradient(170deg,#080818,#100a30)}
-.bg-religione{background:linear-gradient(170deg,#100820,#1e1045)}
+.bg-italiano::before{background:linear-gradient(170deg,rgba(24,8,8,.74),rgba(38,15,15,.74))}
+.bg-inglese::before{background:linear-gradient(170deg,rgba(8,12,24,.72),rgba(16,24,40,.72))}
+.bg-arte::before{background:linear-gradient(170deg,rgba(20,8,24,.72),rgba(30,12,40,.72))}
+.bg-scienze::before{background:linear-gradient(170deg,rgba(4,8,16,.7),rgba(6,14,30,.7))}
+.bg-storia::before{background:linear-gradient(170deg,rgba(7,19,31,.72),rgba(15,30,53,.72))}
+.bg-tecnologia::before{background:linear-gradient(170deg,rgba(6,12,20,.72),rgba(12,20,32,.72))}
+.bg-geografia::before{background:linear-gradient(170deg,rgba(8,18,8,.7),rgba(12,32,16,.7))}
+.bg-educivica::before{background:linear-gradient(170deg,rgba(14,20,8,.72),rgba(22,32,8,.72))}
+.bg-scienzemot::before{background:linear-gradient(170deg,rgba(24,12,6,.72),rgba(34,20,8,.72))}
+.bg-francese::before{background:linear-gradient(170deg,rgba(8,18,8,.7),rgba(16,32,24,.7))}
+.bg-musica::before{background:linear-gradient(170deg,rgba(8,8,24,.72),rgba(16,10,48,.72))}
+.bg-religione::before{background:linear-gradient(170deg,rgba(16,8,32,.72),rgba(30,16,69,.72))}
+.bg-saluti::before{background:linear-gradient(170deg,rgba(18,10,32,.74),rgba(40,20,68,.74))}
 ::-webkit-scrollbar{width:3px}
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:2px}
 </style>
 </head>
 <body>
+<canvas id="sky-canvas"></canvas>
 
 <nav class="nav" id="nav">
   <button class="nav-btn disabled" id="btn-back" onclick="navigate('back')">← indietro</button>
@@ -69,7 +73,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:#060818;font-family:
 </nav>
 
 <section class="section active" id="home">
-  <canvas id="sky-canvas"></canvas>
   <div class="home-title">
     <h1>Sotto un manto<br>di stelle</h1>
     <p>Tesina di terza media &nbsp;·&nbsp; Claudia Falanga</p>
@@ -169,6 +172,16 @@ html,body{width:100%;height:100%;overflow:hidden;background:#060818;font-family:
   </div>
 </section>
 
+<section class="section bg-religione" id="religione">
+  <div class="slides-container">
+    <img src="slides/slide_12.jpg" alt="" class="slide-img">
+    <img src="slides/slide_13.jpg" alt="" class="slide-img">
+    <img src="slides/slide_14.jpg" alt="" class="slide-img">
+    <img src="slides/slide_15.jpg" alt="" class="slide-img">
+    <img src="slides/slide_16.jpg" alt="" class="slide-img">
+  </div>
+</section>
+
 <section class="section bg-francese" id="francese">
   <div class="slides-container">
     <img src="slides/slide_52.jpg" alt="" class="slide-img">
@@ -188,13 +201,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#060818;font-family:
   </div>
 </section>
 
-<section class="section bg-religione" id="religione">
+<section class="section bg-saluti" id="saluti">
   <div class="slides-container">
-    <img src="slides/slide_12.jpg" alt="" class="slide-img">
-    <img src="slides/slide_13.jpg" alt="" class="slide-img">
-    <img src="slides/slide_14.jpg" alt="" class="slide-img">
-    <img src="slides/slide_15.jpg" alt="" class="slide-img">
-    <img src="slides/slide_16.jpg" alt="" class="slide-img">
     <img src="slides/slide_62.jpg" alt="" class="slide-img">
   </div>
 </section>
@@ -213,6 +221,7 @@ const SUBJECTS=[
   {id:'francese',   label:'Francese',         color:'#86efac', x:38, y:67},
   {id:'musica',     label:'Musica',           color:'#a5b4fc', x:68, y:72},
   {id:'religione',  label:'Religione',        color:'#c4b5fd', x:15, y:78},
+  {id:'saluti',     label:'Saluti finali',    color:'#f9a8d4', x:52, y:84},
 ];
 const ORDER=['home',...SUBJECTS.map(s=>s.id)];
 let current='home';
